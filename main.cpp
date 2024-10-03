@@ -48,6 +48,7 @@ public:
     void draw(Board& board, int x, int y, int height) override {
         if (height <= 0 || x < 1 || x >= BOARD_WIDTH - 1 || y < 1 || y + height >= BOARD_HEIGHT - 1) {
             cout<<"Invalid input!!!"<<endl;
+            return;
         }
         for(int i=0;i<height; i++ ){
             int leftMost = x - i;
@@ -66,7 +67,23 @@ public:
     }
 };
 
-class Square:Figure{};
+class Square:Figure{
+public:
+    void draw(Board& board, int x, int y, int size) override {
+        if (size <= 0 || x < 1 || x >= BOARD_WIDTH - 1 || y < 1 || y + size >= BOARD_HEIGHT - 1) {
+            cout << "Invalid input!!!" << endl;
+            return;
+        }
+        for (int i = 0; i < size; ++i) {
+            board.setCell(x, y + i, '*');
+            board.setCell(x + size - 1, y + i, '*');
+        }
+        for (int j = 0; j < size; ++j) {
+            board.setCell(x + j, y, '*' );
+            board.setCell(x + j, y + size - 1, '*');
+        }
+    }
+};
 
 class Rectangle:Figure{};
 
@@ -79,6 +96,9 @@ int main() {
     Board board(BOARD_WIDTH, BOARD_HEIGHT);
     Triangle triangle;
     triangle.draw(board, 40, 5, 5);
+    Square square;
+    square.draw(board, 40, 8, 5);
+
     board.draw();
     return 0;
 }

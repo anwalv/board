@@ -1,15 +1,22 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <map>
+#include <string>
+#include <sstream>
+
+
 
 using namespace std;
-
 const int BOARD_WIDTH = 80;
 const int BOARD_HEIGHT = 25;
 class Board{
-    std::vector<std::vector<char>> grid;
+    vector<vector<char>> grid;
+    vector<string > shape;
+    map<int, string > idParameters;
     int width;
     int height;
+    int currentId=0;
 public:
     Board(int width, int height) : width(width), height(height) {
         grid.resize(height, std::vector<char>(width, ' '));
@@ -38,16 +45,36 @@ public:
             grid[y][x] = value;
         }
     }
+    void addShape(string& shapes, const string& parameters){
+        shape.push_back(shapes);
+        currentId++;
+        idParameters[currentId]= parameters;
+    }
+    void clear() {
+        for (auto& row : grid) {
+            std::fill(row.begin(), row.end(), ' ');
+        }
+        shape.clear();
+        idParameters.clear();
+        drawBorder();
+    }
+
+    map<int, string> getDic(){
+        return idParameters;
+    }
+    vector<string> getShapes(){
+        return shape;
+    }
 };
 
-class Figure{
+class Shape{
 public:
-    virtual void draw(Board& board, int x, int y, int height, int width) = 0;
+    virtual void add(Board& board, int x, int y, int height, int width) = 0;
 };
 
-class Triangle:Figure{
+class Triangle: Shape{
 public:
-    void draw(Board& board, int x, int y, int height, int width) override {
+    void add(Board& board, int x, int y, int height, int width) override {
         if (height <= 0 || width<0 || x < 1 || x >= BOARD_WIDTH - 1 || y < 1 || y + height >= BOARD_HEIGHT - 1) {
             cout<<"Invalid input!!!"<<endl;
             return;
@@ -69,9 +96,9 @@ public:
     }
 };
 
-class Square:Figure{
+class Square: Shape{
 public:
-    void draw(Board& board, int x, int y, int height, int width) override {
+    void add(Board& board, int x, int y, int height, int width) override {
         if (height <= 0 || width<0 || x < 1 || x >= BOARD_WIDTH - 1 || y < 1 || y + height >= BOARD_HEIGHT - 1) {
             cout << "Invalid input!!!" << endl;
             return;
@@ -87,9 +114,9 @@ public:
     }
 };
 
-class Rectangle:Figure{
+class Rectangle: Shape{
 public:
-    void draw(Board& board, int x, int y,int height, int width) override{
+    void add(Board& board, int x, int y, int height, int width) override{
         if (width <= 0 || height <= 0 || x < 1 || x + width >= BOARD_WIDTH - 1 ||
             y < 1 || y + height >= BOARD_HEIGHT - 1) {
             cout << "Invalid input!!!" << endl;
@@ -106,9 +133,9 @@ public:
     }
 };
 
-class Line:Figure{
+class Line: Shape{
 public:
-    void draw(Board& board,int x, int y, int height, int width) override{
+    void add(Board& board, int x, int y, int height, int width) override{
         if (height==0&width==0||height < 0|| width<0 || x < 1 || x >= BOARD_WIDTH - 1 || y < 1 || y + height >= BOARD_HEIGHT - 1){
             cout<<"Invalid input!!!"<<endl;
         }
@@ -125,10 +152,10 @@ public:
     }
 };
 
-class Circle:Figure{
+class Circle: Shape{
 public:
 
-    void draw(Board& board, int x, int y, int radius, int width) override {
+    void add(Board& board, int x, int y, int radius, int width) override {
         if (radius <= 0 || width<0 || x - radius < 1 || x + radius >= BOARD_WIDTH - 1 ||
             y - radius < 1 || y + radius >= BOARD_HEIGHT - 1) {
             cout << "Invalid input!!!" << endl;
@@ -150,23 +177,259 @@ public:
 };
 
 class Manager{
-   //коли лінія то питати вертикальна чи горизонтальна
+    int command =0;
+public:
+    void availableShapes(){
+        cout<<"Shapes:\n"
+              "~ Line>> <x coordinate, y coordinate, length, direction>\n"
+              "~ Triangle>> <x coordinate, y coordinate, height>\n"
+              "~ Square>> <x coordinate, y coordinate, length, direction>\n"
+              "~ Rectangle>> <x coordinate, y coordinate, length, width>\n"
+              "~ Circle>> <x coordinate , y coordinate, radius>\n";
+    }
+
+    void printCommands(){
+        cout<<"Hello!The list of command:\n"
+              "1. List of all available shapes.\n"//+
+              "2. Add shape.\n"//+
+              "3. Draw board.\n"//+
+              "4. List of all added shapes and their parameters.\n"//+
+              "5. Undo: remove the last added shape from the blackboard.\n"
+              "6. Remove all shapes from blackboard.\n"
+              "7. Save the blackboard to the file.\n"
+              "8. Load a blackboard from the file.\n"
+              "9. Exit.\n"<<endl;
+    }
+
+    void add(Board& board){
+        string shape;
+        string par;
+        int x,y,len, width;
+        string direction;
+        cout<<"Enter shape name:";
+        cin.ignore();
+        cin>> shape;
+        if (shape =="Line"|| shape=="line"){
+            cout << "Enter parameters(format: x coordinate,y coordinate,length,direction): ";
+            cin.ignore();
+            getline(cin, par);
+            string cleaned;
+            for (char c : par) {
+                if (c != ' ') {
+                    cleaned += c;
+                }
+            }
+            stringstream ss(cleaned);
+            string item;
+            vector<string> parts;
+            while (getline(ss, item, ',')) {
+                parts.push_back(item);
+            }
+            if (parts.size() != 4) {
+                cout << "Invalid input format." << endl;
+            }
+            x = stoi(parts[0]);
+            y = stoi((parts[1]));
+            len = stoi(parts[2]);
+            direction = parts[3];
+
+            Line line;
+            if (direction == "vertical"|| direction=="Vertical") {
+                line.add(board, x, y, 0, len);
+                board.addShape(shape,cleaned);
+                cout<<"Line was successfully added!"<<endl;
+            }
+            else if (direction =="horizontal"|| direction=="Horizontal"){
+                line.add(board, x, y, len, 0);
+                board.addShape(shape,cleaned);
+                cout<<"Line was successfully added!"<<endl;
+            }
+
+        }
+        if (shape =="Square"|| shape=="square"){
+            cout << "Enter parameters(format: x coordinate,y coordinate,length):";
+            cin.ignore();
+            getline(cin, par);
+            string cleaned;
+            for (char c : par) {
+                if (c != ' ') {
+                    cleaned += c;
+                }
+            }
+            stringstream ss(cleaned);
+            string item;
+            vector<string> parts;
+            while (getline(ss, item, ',')) {
+                parts.push_back(item);
+            }
+            if (parts.size() != 3) {
+                cout << "Invalid input format." << endl;
+            }
+            x = stoi(parts[0]);
+            y = stoi((parts[1]));
+            len = stoi(parts[2]);
+            Square square;
+            square.add(board, x, y, len, 0);
+            board.addShape(shape,cleaned);
+            cout<<"Square was successfully added!"<<endl;
+
+        }
+        if (shape =="Triangle"|| shape=="triangle"){
+            cout << "Enter parameters(format: x coordinate,y coordinate,height):";
+            cin.ignore();
+            getline(cin, par);
+            string cleaned;
+            for (char c : par) {
+                if (c != ' ') {
+                    cleaned += c;
+                }
+            }
+            stringstream ss(cleaned);
+            string item;
+            vector<string> parts;
+            while (getline(ss, item, ',')) {
+                parts.push_back(item);
+            }
+            if (parts.size() != 3) {
+                cout << "Invalid input format." << endl;
+            }
+            x = stoi(parts[0]);
+            y = stoi((parts[1]));
+            len = stoi(parts[2]);
+            Triangle triangle;
+            triangle.add(board, x, y, len, 0);
+            board.addShape(shape,cleaned);
+            cout<<"Triangle was successfully added!"<<endl;
+
+        }
+        if (shape =="Rectangle"|| shape=="rectangle"){
+            cout << "Enter parameters(format: x coordinate,y coordinate,height,width):";
+            cin.ignore();
+            getline(cin, par);
+            string cleaned;
+            for (char c : par) {
+                if (c != ' ') {
+                    cleaned += c;
+                }
+            }
+            stringstream ss(cleaned);
+            string item;
+            vector<string> parts;
+            while (getline(ss, item, ',')) {
+                parts.push_back(item);
+            }
+            if (parts.size() != 4) {
+                cout << "Invalid input format." << endl;
+            }
+            x = stoi(parts[0]);
+            y = stoi((parts[1]));
+            len = stoi(parts[2]);
+            width = stoi(parts[3]);
+
+            Rectangle rectangle;
+            rectangle.add(board, x, y, len, width);
+            board.addShape(shape,cleaned);
+            cout<<"Rectangle was successfully added!"<<endl;
+
+        }
+        if (shape =="Circle"|| shape=="circle"){
+            cout << "Enter parameters(format: x coordinate,y coordinate,radius): ";
+            cin.ignore();
+            getline(cin, par);
+            string cleaned;
+            for (char c : par) {
+                if (c != ' ') {
+                    cleaned += c;
+                }
+            }
+            stringstream ss(cleaned);
+            string item;
+            vector<string> parts;
+            while (getline(ss, item, ',')) {
+                parts.push_back(item);
+            }
+            if (parts.size() != 3) {
+                cout << "Invalid input format." << endl;
+            }
+            x = stoi(parts[0]);
+            y = stoi((parts[1]));
+            len = stoi(parts[2]);
+            Circle circle;
+            circle.add(board, x, y, len, 0);
+            board.addShape(shape,cleaned);
+            cout<<"Circle was successfully added!"<<endl;
+
+        }
+
+    }
+
+    void addedShapes(Board& board){
+        vector<string> shapes = board.getShapes();
+        map<int, string> idParam = board.getDic();
+        int id;
+        string shape;
+        string par;
+        for (const auto& pair:idParam){
+            id = pair.first;
+            par = pair.second;
+            shape = shapes[id-1];
+            cout<<id<<". "<<shape<<"->"<<" "<<par << endl;
+        }
+    }
+
+    Board undo(Board& board, vector<Board>& boardStates) {
+        if (boardStates.size() > 1) {
+            board = boardStates[boardStates.size() - 2]; // Повертаємось до передостаннього стану
+            boardStates.pop_back(); // Видаляємо останній стан, оскільки він більше не потрібен
+            cout << "Undo successful." << endl;
+        } else {
+            cout << "No actions to undo." << endl;
+        }
+        return board;
+    }
+
+    void manage(){
+        Board board(BOARD_WIDTH, BOARD_HEIGHT);
+        vector<Board> boardStates;
+        boardStates.push_back(board);
+        printCommands();
+        while(command != 9){
+            cout << "\nEnter the command:" << endl;
+            cin >> command;
+            switch (command) {
+                case 1:
+                    availableShapes();
+                    break;
+                case 2:
+                    add(board);
+                    boardStates.push_back(board);
+                    break;
+
+                case 3:
+                    board.draw();
+                    break;
+
+                case 4:
+                    addedShapes(board);
+                    break;
+
+                case 5:
+                    board = undo(board, boardStates);
+
+                    break;
+                case 6:
+                    board.clear();
+                    cout << "Board has been cleared." << endl;
+                    break;
+            }
+        }
+        cout<<"Ciao, bella!!";
+    }
 };
 
 class Writer{};
 int main() {
-    Board board(BOARD_WIDTH, BOARD_HEIGHT);
-    Triangle triangle;
-    triangle.draw(board, 10, 8, 3, 0);
-    Circle circle;
-    circle.draw(board, 6, 4, 3, 0);
-    Square square;
-    square.draw(board, 40, 8, 5, 0);
-    Rectangle rectangle;
-    rectangle.draw(board, 4,15,3,8);
-    Line line;
-    line.draw(board, 15, 18, 0, 4);
-    line.draw(board, 17, 16, 4, 0);
-    board.draw();
+    Manager manager;
+    manager.manage();
     return 0;
 }

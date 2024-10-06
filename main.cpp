@@ -11,6 +11,7 @@
 using namespace std;
 const int BOARD_WIDTH = 80;
 const int BOARD_HEIGHT = 25;
+
 class Manager;
 
 class Board{
@@ -200,6 +201,7 @@ public:
         }
         if (parts.size() != 4) {
             cout << "Invalid input format." << endl;
+            return;
         }
         x = stoi(parts[0]);
         y = stoi((parts[1]));
@@ -255,6 +257,7 @@ public:
         }
         if (parts.size() != 3) {
             cout << "Invalid input format." << endl;
+            return;
         }
         x = stoi(parts[0]);
         y = stoi((parts[1]));
@@ -277,6 +280,7 @@ public:
         }
         if (parts.size() != 4) {
             cout << "Invalid input format." << endl;
+            return;
         }
         x = stoi(parts[0]);
         y = stoi((parts[1]));
@@ -288,6 +292,7 @@ public:
         if(value == 0){
             board.addShape(shape,par);
             cout<<"Rectangle was successfully added!"<<endl;
+
         }
     }
 
@@ -301,6 +306,7 @@ public:
         }
         if (parts.size() != 3) {
             cout << "Invalid input format." << endl;
+            return;
         }
         x = stoi(parts[0]);
         y = stoi((parts[1]));
@@ -347,13 +353,12 @@ public:
         if (inFile.is_open()) {
             string line;
             board.clear();
-            if (getline(inFile, line) && line == "null") {
-                cout << "Board was empty." << endl;
-                inFile.close();
-                return;
-            }
-            else {
-                while (getline(inFile, line)) {
+            while (getline(inFile, line)) {
+                if (line=="null"){
+                    cout << "Board was empty." << endl;
+                    inFile.close();
+                    return;
+                }else{
                     stringstream ss(line);
                     string id;
                     string shape;
@@ -376,9 +381,9 @@ public:
                         cout << "Error!" << endl;
                     }
                 }
-                inFile.close();
-                cout << "Board was successfully loaded from " << fileName << endl;
             }
+            inFile.close();
+            cout << "Board was successfully loaded from " << fileName << endl;
         } else {
             cout << "Error!" << endl;
         }
@@ -433,7 +438,7 @@ public:
             addShapes.addLine(board, cleaned, shape);
 
         }
-        if (shape =="Square"|| shape=="square"){
+        else if (shape =="Square"|| shape=="square"){
             cout << "Enter parameters(format: x coordinate,y coordinate,length):";
             cin.ignore();
             getline(cin, par);
@@ -446,7 +451,7 @@ public:
             addShapes.addSquare(board, cleaned, shape);
 
         }
-        if (shape =="Triangle"|| shape=="triangle"){
+        else if (shape =="Triangle"|| shape=="triangle"){
             cout << "Enter parameters(format: x coordinate,y coordinate,height):";
             cin.ignore();
             getline(cin, par);
@@ -459,7 +464,7 @@ public:
             addShapes.addTriangle(board, cleaned, shape);
 
         }
-        if (shape =="Rectangle"|| shape=="rectangle"){
+         else if (shape =="Rectangle"|| shape=="rectangle"){
             cout << "Enter parameters(format: x coordinate,y coordinate,height,width):";
             cin.ignore();
             getline(cin, par);
@@ -472,7 +477,7 @@ public:
             addShapes.addRectangle(board, cleaned, shape);
 
         }
-        if (shape =="Circle"|| shape=="circle"){
+        else if (shape =="Circle"|| shape=="circle"){
             cout << "Enter parameters(format: x coordinate,y coordinate,radius): ";
             cin.ignore();
             getline(cin, par);

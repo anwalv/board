@@ -71,6 +71,8 @@ public:
 class Shape{
 public:
     virtual bool add(Board& board, int x, int y, int height, int width) = 0;
+    virtual bool fill(Board& board, int x, int y, int height,int width, char color) = 0;
+
 };
 
 class Triangle: Shape{
@@ -78,7 +80,7 @@ public:
     bool add(Board& board, int x, int y, int height, int width) override {
         if (height <= 0 || width<0 || x < 1 || x >= BOARD_WIDTH - 1 || y < 1 || y + height >= BOARD_HEIGHT - 1) {
             cout<<"Invalid input!!!"<<endl;
-            return 1;
+            return 0;
         }
         for(int i=0;i<height; i++ ){
             int leftMost = x - i;
@@ -94,7 +96,15 @@ public:
                 board.setCell(baseX, baseY, '*');
             }
         }
-        return 0;
+        return 1;
+    }
+    bool fill(Board& board, int x, int y, int height, int width, char color) override {
+        for (int i = 0; i < height; i++) {
+            for (int j = -i; j <= i; j++) {
+                board.setCell(x + j, y + i, color);
+            }
+        }
+        return 1;
     }
 };
 
@@ -103,7 +113,7 @@ public:
     bool add(Board& board, int x, int y, int height, int width) override {
         if (height <= 0 || width<0 || x < 1 || x >= BOARD_WIDTH - 1 || y < 1 || y + height >= BOARD_HEIGHT - 1) {
             cout << "Invalid input!!!" << endl;
-            return 1;
+            return 0;
         }
         for (int i = 0; i < height; ++i) {
             board.setCell(x, y + i, '*');
@@ -113,7 +123,15 @@ public:
             board.setCell(x + j, y, '*' );
             board.setCell(x + j, y + height - 1, '*');
         }
-        return 0;
+        return 1;
+    }
+    bool fill(Board& board, int x, int y, int height, int width, char color) override {
+        for (int i = 0; i < height; ++i) {
+            for (int j = 0; j < height; ++j) {
+                board.setCell(x + j, y + i, color);
+            }
+        }
+        return 1;
     }
 };
 
@@ -123,7 +141,7 @@ public:
         if (width <= 0 || height <= 0 || x < 1 || x + width >= BOARD_WIDTH - 1 ||
             y < 1 || y + height >= BOARD_HEIGHT - 1) {
             cout << "Invalid input!!!" << endl;
-            return 1;
+            return 0;
         }
         for (int i =0; i<width; i++){
             board.setCell(x+i, y, '*');
@@ -133,28 +151,48 @@ public:
             board.setCell(x, y+j,'*');
             board.setCell(x+width-1, y+j, '*');
         }
-        return 0;
+        return 1;
+    }
+    bool fill(Board& board, int x, int y, int height, int width, char color) override {
+        for (int i = 0; i < height; ++i) {
+            for (int j = 0; j < width; ++j) {
+                board.setCell(x + j, y + i, color);
+            }
+        }
+        return 1;
     }
 };
 
 class Line: Shape{
 public:
     bool add(Board& board, int x, int y, int height, int width) override{
-        if (height==0&width==0||height < 0|| width<0 || x < 1 || x >= BOARD_WIDTH - 1 || y < 1 || y + height >= BOARD_HEIGHT - 1){
+        if (height==0 &&width==0||height < 0|| width<0 || x < 1 || x >= BOARD_WIDTH - 1 || y < 1 || y + height >= BOARD_HEIGHT - 1){
             cout<<"Invalid input!!!"<<endl;
-            return 1;
+            return 0;
         }
         if (width == 0){
             for (int i = 0; i < height; i++) {
                 board.setCell(x + i, y, '*');
             }
+            return  1;
         }
         else if(height==0){
             for(int i = 0; i<width; i++){
                 board.setCell(x,y+i, '*');
             }
+            return 1;
         }
-        return 0;
+    }
+    bool fill(Board& board, int x, int y, int height, int width, char color) override {
+        if (height==0) {
+            for (int i = 0; i < width; ++i) {
+                board.setCell(x, y + i, color);
+            }
+        } else if(width == 0) {
+            for (int j = 0; j < height; ++j) {
+                board.setCell(x + j, y, color);
+            }
+        }return 1;
     }
 };
 
@@ -165,7 +203,7 @@ public:
         if (radius <= 0 || width<0 || x - radius < 1 || x + radius >= BOARD_WIDTH - 1 ||
             y - radius < 1 || y + radius >= BOARD_HEIGHT - 1) {
             cout << "Invalid input!!!" << endl;
-            return 1;
+            return 0;
         }
 
         for (int i = 0; i <= radius; i++) {
@@ -178,19 +216,38 @@ public:
                 }
             }
         }
-        return 0;
-
+        return 1;
+    }
+    bool fill(Board& board, int x, int y, int radius,  int width, char color) override {
+        for (int i = 0; i <= radius; i++) {
+            for (int j = 0; j <= radius; j++) {
+                if (round(sqrt(i * i + j * j)) == radius) {
+                    board.setCell(x + j, y + i, color);
+                    board.setCell(x - j, y + i, color);
+                    board.setCell(x + j, y - i, color);
+                    board.setCell(x - j, y - i, color);
+                }
+            }
+        }
+        for (int i = -radius + 1; i < radius; ++i) {
+            for (int j = -radius + 1; j < radius; ++j) {
+                if (i * i + j * j < radius * radius) {
+                    board.setCell(x + i, y + j, color);
+                }
+            }
+        }return 1;
     }
 
 };
 
 class AddShapes{
 public:
-    void addLine(Board& board, string par, string shape){
+    void addLine(Board& board, string par, string shape, string fillMode, string color){
         stringstream ss(par);
         int x,y,len;
         string direction;
         string item;
+        char symbol = color[0];
         vector<string> parts;
         while (getline(ss, item, ',')) {
             parts.push_back(item);
@@ -205,25 +262,42 @@ public:
         direction = parts[3];
         Line line;
         if (direction == "vertical"|| direction=="Vertical") {
-            bool value =line.add(board, x, y, 0, len);
-            if(value == 0){
-                board.addShape(shape,par);
-                cout<<"Line was successfully added!"<<endl;
+            if (fillMode == "empty"||fillMode == "Empty"){
+                bool value = line.add(board, x, y, 0, len);
+                if(value == 0){
+                    board.addShape(shape,par);
+                    cout<<"Line was successfully added!"<<endl;
+                }
+            } else{
+                bool value = line.fill(board, x, y, 0, len, symbol);
+                if(value == 1){
+                    board.addShape(shape,par);
+                    cout<<"Line was successfully added!"<<endl;
+                }
             }
         }
         else if (direction =="horizontal"|| direction=="Horizontal"){
-            bool value =line.add(board, x, y, len, 0);
-            if(value == 0){
-                board.addShape(shape,par);
-                cout<<"Line was successfully added!"<<endl;
+            if (fillMode == "empty"||fillMode == "Empty"){
+                bool value = line.add(board, x, y, len, 0);
+                if(value == 1){
+                    board.addShape(shape,par);
+                    cout<<"Line was successfully added!"<<endl;
+                }
+            } else{
+                bool value = line.fill(board, x, y,  len,0, symbol);
+                if(value == 1){
+                    board.addShape(shape,par);
+                    cout<<"Line was successfully added!"<<endl;
+                }
             }
         }
     }
 
-    void addSquare(Board& board, string par, string shape){
+    void addSquare(Board& board, string par, string shape, string fillMode, string color){
         int x,y,len;
         stringstream ss(par);
         string item;
+        char symbol = color[0];
         vector<string> parts;
         while (getline(ss, item, ',')) {
             parts.push_back(item);
@@ -236,18 +310,27 @@ public:
         y = stoi((parts[1]));
         len = stoi(parts[2]);
         Square square;
-        bool value = square.add(board, x, y, len, 0);
-        if(value == 0){
-            board.addShape(shape,par);
-            cout<<"Square was successfully added!"<<endl;
+        if (fillMode == "empty"||fillMode == "Empty") {
+            bool value = square.add(board, x, y, len, 0);
+            if (value == 1) {
+                board.addShape(shape, par);
+                cout << "Square was successfully added!" << endl;
+            }
+        } else{
+            bool value = square.fill(board, x, y,  len,0, symbol);
+            if (value == 1) {
+                board.addShape(shape, par);
+                cout << "Square was successfully added!" << endl;
+            }
         }
     }
 
-    void addTriangle(Board& board, string par, string shape){
+    void addTriangle(Board& board, string par, string shape,  string fillMode, string color){
         stringstream ss(par);
         int x,y,len;
         string item;
         vector<string> parts;
+        char symbol = color[0];
         while (getline(ss, item, ',')) {
             parts.push_back(item);
         }
@@ -259,18 +342,27 @@ public:
         y = stoi((parts[1]));
         len = stoi(parts[2]);
         Triangle triangle;
-        bool value = triangle.add(board, x, y, len, 0);
-        if(value == 0){
-            board.addShape(shape,par);
-            cout<<"Triangle was successfully added!"<<endl;
+        if (fillMode == "empty"||fillMode == "Empty") {
+            bool value = triangle.add(board, x, y, len, 0);
+            if (value == 1) {
+                board.addShape(shape, par);
+                cout << "Triangle was successfully added!" << endl;
+            }
+        }else{
+            bool value = triangle.fill(board, x, y,  len,0, symbol);
+            if (value == 1) {
+                board.addShape(shape, par);
+                cout << "Triangle was successfully added!" << endl;
+            }
         }
     }
 
-    void addRectangle(Board& board, string par, string shape){
+    void addRectangle(Board& board, string par, string shape, string fillMode, string color){
         stringstream ss(par);
         int x,y,len, width;
         string item;
         vector<string> parts;
+        char symbol = color[0];
         while (getline(ss, item, ',')) {
             parts.push_back(item);
         }
@@ -284,19 +376,28 @@ public:
         width = stoi(parts[3]);
 
         Rectangle rectangle;
-        bool value = rectangle.add(board, x, y, len, width);
-        if(value == 0){
-            board.addShape(shape,par);
-            cout<<"Rectangle was successfully added!"<<endl;
+        if (fillMode == "empty"||fillMode == "Empty") {
+            bool value = rectangle.add(board, x, y, len, width);
+            if (value == 1) {
+                board.addShape(shape, par);
+                cout << "Rectangle was successfully added!" << endl;
 
+            }
+        }else{
+            bool value = rectangle.fill(board, x, y,  len,width, symbol);
+            if (value == 1) {
+                board.addShape(shape, par);
+                cout << "Rectangle was successfully added!" << endl;
+            }
         }
     }
 
-    void addCircle(Board& board, string par, string shape){
+    void addCircle(Board& board, string par, string shape,string fillMode, string color){
         stringstream ss(par);
         int x,y,len;
         string item;
         vector<string> parts;
+        char symbol = color[0];
         while (getline(ss, item, ',')) {
             parts.push_back(item);
         }
@@ -308,10 +409,18 @@ public:
         y = stoi((parts[1]));
         len = stoi(parts[2]);
         Circle circle;
-        bool value = circle.add(board, x, y, len, 0);
-        if(value == 0){
-            board.addShape(shape,par);
-            cout<<"Circle was successfully added!"<<endl;
+        if (fillMode == "empty"||fillMode == "Empty") {
+            bool value = circle.add(board, x, y, len, 0);
+            if (value == 1) {
+                board.addShape(shape, par);
+                cout << "Circle was successfully added!" << endl;
+            }
+        } else{
+            bool value = circle.fill(board, x, y,  len,0, symbol);
+            if (value == 1) {
+                board.addShape(shape, par);
+                cout << "Circle was successfully added!" << endl;
+            }
         }
     }
 };
@@ -359,20 +468,22 @@ public:
                     string id;
                     string shape;
                     string parameters;
+                    string fillMode;
+                    string symbol;
 
                     getline(ss, id, '-');
                     getline(ss, shape, '-');
                     getline(ss, parameters);
                     if (shape == "Line" || shape == "line") {
-                        addShapes.addLine(board, parameters, shape);
+                        addShapes.addLine(board, parameters, shape,fillMode,symbol);
                     } else if (shape == "Triangle" || shape == "triangle") {
-                        addShapes.addTriangle(board, parameters, shape);
+                        addShapes.addTriangle(board, parameters, shape,fillMode,symbol);
                     } else if (shape == "Square" || shape == "square") {
-                        addShapes.addSquare(board, parameters, shape);
+                        addShapes.addSquare(board, parameters, shape, fillMode,symbol);
                     } else if (shape == "Rectangle" || shape == "rectangle") {
-                        addShapes.addRectangle(board, parameters, shape);
+                        addShapes.addRectangle(board, parameters, shape, fillMode,symbol);
                     } else if (shape == "Circle" || shape == "circle") {
-                        addShapes.addCircle(board, parameters, shape);
+                        addShapes.addCircle(board, parameters, shape, fillMode,symbol);
                     } else {
                         cout << "Error!" << endl;
                     }
@@ -387,7 +498,7 @@ public:
 };
 
 class Manager{
-    int command =0;
+    string command ="0";
     Writer writer;
 public:
     void availableShapes(){
@@ -412,31 +523,28 @@ public:
               "9. Exit.\n"<<endl;
     }
 
-    void add(Board& board, string shape, string filled, string par){
+    void add(Board& board, string shape, string par, string fillMode,string symbol){
         AddShapes addShapes;
-        cin.ignore();
         if (shape =="Line"|| shape=="line"){
-            addShapes.addLine(board, par, shape);
+            addShapes.addLine(board, par, shape, fillMode,symbol);
         }
         else if (shape =="Square"|| shape=="square"){
-            addShapes.addSquare(board, par, shape);
+            addShapes.addSquare(board, par, shape, fillMode,symbol);
 
         }
         else if (shape =="Triangle"|| shape=="triangle"){
-            addShapes.addTriangle(board, par, shape);
+            addShapes.addTriangle(board, par, shape, fillMode,symbol);
         }
          else if (shape =="Rectangle"|| shape=="rectangle"){
-            addShapes.addRectangle(board, par, shape);
+            addShapes.addRectangle(board, par, shape, fillMode,symbol);
 
         }
         else if (shape =="Circle"|| shape=="circle"){
-            addShapes.addCircle(board, par, shape);
+            addShapes.addCircle(board, par, shape, fillMode,symbol);
         }
         else{
             cout<<"Invalid name:("<<endl;
         }
-
-
     }
 
     void addedShapes(Board& board){
@@ -482,37 +590,37 @@ public:
 
     void manage(){
         Board board(BOARD_WIDTH, BOARD_HEIGHT);
-        string shape, userInput, item, filled, params;
+        string shape, userInput, item,value, fillMode, params,symbol, fillColor;
         vector<string> parts;
+        vector<string>colors;
         vector<Board> boardStates;
         boardStates.push_back(board);
         printCommands();
         string filePath;
-        while(command != 9){
-            cout << "\nEnter the command and info(in add command you must specify fill mode or empty shape):" << endl;
+        while(command != "9"){
+            cout << "Enter the command and info(in add command you must specify fill mode or empty shape):";
             getline(cin, userInput);
-            string cleaned;
-            for (char c : userInput) {
-                if (c != ' ') {
-                    cleaned += c;
-                }
-            }
-            stringstream ss(cleaned);
+            stringstream ss(userInput);
             parts.clear();
+            colors.clear();
             while (getline(ss, item, ',')) {
                 parts.push_back(item);
             }
-            command = stoi(parts[0]);
-            if (command == 1){
+            command = parts[0];
+            if (command == "1"){
                 availableShapes();
                 continue;
             }
-            else if (command == 2){
+            else if (command == "2"){
                 if (parts.size() < 6) {
                     cout << "Invalid input for add command. Please try again." << endl;
                     continue;
                 }
-                filled =parts[1];
+                fillColor =parts[1];
+                stringstream ss(fillColor);
+                while (getline(ss, value, ' ')) {
+                    colors.push_back(value);
+                }
                 shape =parts[2];
                 params= "";
                 int requiredParams = 0;
@@ -521,7 +629,7 @@ public:
                 } else if (shape == "Triangle"|| shape == "triangle") {
                     requiredParams = 3;
                 } else if (shape == "Square"||shape == "square") {
-                    requiredParams = 4;
+                    requiredParams = 3;
                 } else if (shape == "Rectangle"||shape == "rectangle") {
                     requiredParams = 4;
                 } else if (shape == "Circle"||shape == "circle") {
@@ -538,36 +646,44 @@ public:
                     params += parts[i];
                     if (i != (2 + requiredParams)) params += ",";
                 }
-                add(board, shape, filled, params);
+                fillMode = colors[0];
+                if(colors.size()==2){
+                    symbol= colors[1];
+                }else if (colors.size()==1){
+                    symbol = "*";
+                }
+                add(board, shape, params,fillMode,symbol);
                 boardStates.push_back(board);
                 continue;
             }
-            else if (command == 3){
+            else if (command == "3"){
                 board.draw();
                 continue;
             }
-            else if (command == 4) {
+            else if (command == "4") {
                 addedShapes(board);
                 continue;
             }
-            else if (command == 5) {
+            else if (command == "5") {
                 board = undo(board, boardStates);
                 continue;
             }
-            else if (command == 6) {
+            else if (command == "6") {
                 board.clear();
                 cout << "Board has been cleared." << endl;
                 continue;
             }
-            else if (command == 7){
+            else if (command == "7"){
                 filePath = parts[1];
                 writer.saveToFile(board, filePath);
                 continue;
             }
-            else if (command == 8) {
+            else if (command == "8") {
                 filePath = parts[1];
                 writer.loadFromFile(board, filePath);
                 continue;
+            } else{
+                cout<<"gh";
             }
         }
     }
@@ -577,4 +693,4 @@ int main() {
     Manager manager;
     manager.manage();
     return 0;
-}
+};

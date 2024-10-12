@@ -6,13 +6,9 @@
 #include <sstream>
 #include <fstream>
 
-
-
 using namespace std;
 const int BOARD_WIDTH = 80;
 const int BOARD_HEIGHT = 25;
-
-class Manager;
 
 class Board{
     vector<vector<char>> grid;
@@ -396,11 +392,11 @@ class Manager{
 public:
     void availableShapes(){
         cout<<"Shapes:\n"
-              "~ Line>> <x coordinate, y coordinate, length, direction>\n"
-              "~ Triangle>> <x coordinate, y coordinate, height>\n"
-              "~ Square>> <x coordinate, y coordinate, length, direction>\n"
-              "~ Rectangle>> <x coordinate, y coordinate, length, width>\n"
-              "~ Circle>> <x coordinate , y coordinate, radius>\n";
+              "~ Line, fill mode or empty, x coordinate, y coordinate, length, direction~\n"
+              "~ Triangle, fill mode or empty,x coordinate, y coordinate, height~\n"
+              "~ Square,fill mode or empty,x coordinate, y coordinate, length, direction~\n"
+              "~ Rectangle,fill mode or empty,x coordinate, y coordinate, length, width~\n"
+              "~ Circle,fill mode or empty,x coordinate , y coordinate, radius~\n";
     }
 
     void printCommands(){
@@ -416,78 +412,25 @@ public:
               "9. Exit.\n"<<endl;
     }
 
-    void add(Board& board){
+    void add(Board& board, string shape, string filled, string par){
         AddShapes addShapes;
-        string shape;
-        string par;
-        int x,y,len, width;
-        string direction;
-        cout<<"Enter shape name:";
         cin.ignore();
-        cin>> shape;
         if (shape =="Line"|| shape=="line"){
-            cout << "Enter parameters(format: x coordinate,y coordinate,length,direction): ";
-            cin.ignore();
-            getline(cin, par);
-            string cleaned;
-            for (char c : par) {
-                if (c != ' ') {
-                    cleaned += c;
-                }
-            }
-            addShapes.addLine(board, cleaned, shape);
-
+            addShapes.addLine(board, par, shape);
         }
         else if (shape =="Square"|| shape=="square"){
-            cout << "Enter parameters(format: x coordinate,y coordinate,length):";
-            cin.ignore();
-            getline(cin, par);
-            string cleaned;
-            for (char c : par) {
-                if (c != ' ') {
-                    cleaned += c;
-                }
-            }
-            addShapes.addSquare(board, cleaned, shape);
+            addShapes.addSquare(board, par, shape);
 
         }
         else if (shape =="Triangle"|| shape=="triangle"){
-            cout << "Enter parameters(format: x coordinate,y coordinate,height):";
-            cin.ignore();
-            getline(cin, par);
-            string cleaned;
-            for (char c : par) {
-                if (c != ' ') {
-                    cleaned += c;
-                }
-            }
-            addShapes.addTriangle(board, cleaned, shape);
-
+            addShapes.addTriangle(board, par, shape);
         }
          else if (shape =="Rectangle"|| shape=="rectangle"){
-            cout << "Enter parameters(format: x coordinate,y coordinate,height,width):";
-            cin.ignore();
-            getline(cin, par);
-            string cleaned;
-            for (char c : par) {
-                if (c != ' ') {
-                    cleaned += c;
-                }
-            }
-            addShapes.addRectangle(board, cleaned, shape);
+            addShapes.addRectangle(board, par, shape);
 
         }
         else if (shape =="Circle"|| shape=="circle"){
-            cout << "Enter parameters(format: x coordinate,y coordinate,radius): ";
-            cin.ignore();
-            getline(cin, par);
-            string cleaned;
-            for (char c : par) {
-                if (c != ' ') {
-                    cleaned += c;
-                }
-            }
-            addShapes.addCircle(board, cleaned, shape);
+            addShapes.addCircle(board, par, shape);
         }
         else{
             cout<<"Invalid name:("<<endl;
@@ -512,8 +455,8 @@ public:
 
     Board undo(Board& board, vector<Board>& boardStates) {
         if (boardStates.size() > 1) {
-            board = boardStates[boardStates.size() - 2]; // Повертаємось до передостаннього стану
-            boardStates.pop_back(); // Видаляємо останній стан, оскільки він більше не потрібен
+            board = boardStates[boardStates.size() - 2];
+            boardStates.pop_back();
             cout << "Undo successful." << endl;
         } else {
             cout << "No actions to undo." << endl;
@@ -539,48 +482,94 @@ public:
 
     void manage(){
         Board board(BOARD_WIDTH, BOARD_HEIGHT);
+        string shape, userInput, item, filled, params;
+        vector<string> parts;
         vector<Board> boardStates;
-        Manager manager;
         boardStates.push_back(board);
         printCommands();
+        string filePath;
         while(command != 9){
-            cout << "\nEnter the command:" << endl;
-            cin >> command;
-            switch (command) {
-                case 1:
-                    availableShapes();
-                    break;
-                case 2:
-                    add(board);
-                    boardStates.push_back(board);
-                    break;
-
-                case 3:
-                    board.draw();
-                    break;
-
-                case 4:
-                    addedShapes(board);
-                    break;
-
-                case 5:
-                    board = undo(board, boardStates);
-
-                    break;
-                case 6:
-                    board.clear();
-                    cout << "Board has been cleared." << endl;
-                    break;
-                case 7:
-                    fileWriter(board);
-                    break;
-                case 8:
-                    fileReader(board);
-                    break;
-
+            cout << "\nEnter the command and info(in add command you must specify fill mode or empty shape):" << endl;
+            getline(cin, userInput);
+            string cleaned;
+            for (char c : userInput) {
+                if (c != ' ') {
+                    cleaned += c;
+                }
+            }
+            stringstream ss(cleaned);
+            parts.clear();
+            while (getline(ss, item, ',')) {
+                parts.push_back(item);
+            }
+            command = stoi(parts[0]);
+            if (command == 1){
+                availableShapes();
+                continue;
+            }
+            else if (command == 2){
+                if (parts.size() < 6) {
+                    cout << "Invalid input for add command. Please try again." << endl;
+                    continue;
+                }
+                filled =parts[1];
+                shape =parts[2];
+                params= "";
+                int requiredParams = 0;
+                if (shape == "Line"||shape == "line") {
+                    requiredParams = 4;
+                } else if (shape == "Triangle"|| shape == "triangle") {
+                    requiredParams = 3;
+                } else if (shape == "Square"||shape == "square") {
+                    requiredParams = 4;
+                } else if (shape == "Rectangle"||shape == "rectangle") {
+                    requiredParams = 4;
+                } else if (shape == "Circle"||shape == "circle") {
+                    requiredParams = 3;
+                } else {
+                    cout << "Unknown shape. Please try again." << endl;
+                    continue;
+                }
+                if (parts.size() < 3 + requiredParams) {
+                    cout << "Invalid number of parameters for the shape. Please try again." << endl;
+                    continue;
+                }
+                for (int i=3; i<3 + requiredParams; ++i) {
+                    params += parts[i];
+                    if (i != (2 + requiredParams)) params += ",";
+                }
+                add(board, shape, filled, params);
+                boardStates.push_back(board);
+                continue;
+            }
+            else if (command == 3){
+                board.draw();
+                continue;
+            }
+            else if (command == 4) {
+                addedShapes(board);
+                continue;
+            }
+            else if (command == 5) {
+                board = undo(board, boardStates);
+                continue;
+            }
+            else if (command == 6) {
+                board.clear();
+                cout << "Board has been cleared." << endl;
+                continue;
+            }
+            else if (command == 7){
+                filePath = parts[1];
+                writer.saveToFile(board, filePath);
+                continue;
+            }
+            else if (command == 8) {
+                filePath = parts[1];
+                writer.loadFromFile(board, filePath);
+                continue;
             }
         }
-        cout<<"Ciao, bella!!";
     }
 };
 

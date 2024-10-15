@@ -24,6 +24,11 @@ public:
     virtual int getId()=0;
     virtual string getFillMode()=0;
     virtual char getColor()=0;
+    virtual int getHeight()=0;
+    virtual int getWidth()=0;
+    virtual int getX() =0;
+    virtual int getY()=0;
+    virtual void setColor(char newColor)=0;
     virtual ~Shape() = default;
 
 };
@@ -111,6 +116,7 @@ private:
     int baseX;
     int baseY;
     int height;
+    int width =0;
     int id;
     string fillMode;
     char color;
@@ -161,6 +167,21 @@ public:
     char getColor()override{
         return color;
     };
+    int getHeight() override{
+        return height;
+    }
+    int getWidth() override{
+        return width;
+    }
+    int getX()override{
+        return baseX;
+    }
+    int getY() override{
+        return baseY;
+    }
+    void setColor(char newColor) override {
+        color = newColor;
+    }
 
 };
 
@@ -169,6 +190,7 @@ private:
     int baseX;
     int baseY;
     int height;
+    int width = 0;
     int id;
     string fillMode;
     char color;
@@ -213,6 +235,21 @@ public:
     char getColor()override{
         return color;
     };
+    int getHeight() override{
+        return height;
+    }
+    int getWidth() override{
+        return width;
+    }
+    int getX()override{
+        return baseX;
+    }
+    int getY() override{
+        return baseY;
+    }
+    void setColor(char newColor) override {
+        color = newColor;
+    }
 };
 
 class Rectangle: public Shape{
@@ -265,6 +302,21 @@ public:
     char getColor()override{
         return color;
     };
+    int getHeight() override{
+        return height;
+    }
+    int getWidth() override{
+        return width;
+    }
+    int getX()override{
+        return baseX;
+    }
+    int getY() override{
+        return baseY;
+    }
+    void setColor(char newColor) override{
+        color = newColor;
+    }
 };
 
 class Line: public Shape{
@@ -326,6 +378,21 @@ public:
     char getColor()override{
         return color;
     };
+    int getHeight() override{
+        return height;
+    }
+    int getWidth() override{
+        return width;
+    }
+    int getX()override{
+        return baseX;
+    }
+    int getY() override{
+        return baseY;
+    }
+    void setColor(char newColor) override {
+        color = newColor;
+    }
 };
 
 class Circle: public Shape{
@@ -333,6 +400,7 @@ private:
     int centerX;
     int centerY;
     int radius;
+    int width =0;
     int id;
     string fillMode;
     char color;
@@ -386,8 +454,29 @@ public:
     int getId() override{
         return id;
     }
-    string getFillMode(){};
-    char getColor(){};
+    string getFillMode() override{
+        return fillMode;
+    };
+
+    void setColor(char newColor)override {
+        color = newColor;
+    }
+
+    char getColor()override{
+        return color;
+    };
+    int getHeight() override{
+        return radius;
+    }
+    int getWidth() override{
+        return width;
+    }
+    int getX()override{
+        return centerX;
+    }
+    int getY() override{
+        return centerY;
+    }
 
 };
 
@@ -812,6 +901,7 @@ public:
             cout<<"No selected shape";
         }
     }
+
     void edit(Board& board, shared_ptr<Shape> shape,string newParam){
         vector<shared_ptr<Shape>>& shapes = board.getShapes();
         map<int, string >& idParameters = board.getDic();
@@ -968,6 +1058,138 @@ public:
         }
     }
 
+    void move(Board& board, shared_ptr<Shape> shape,string newParam){
+        vector<shared_ptr<Shape>>& shapes = board.getShapes();
+        map<int, string >& idParameters = board.getDic();
+        if (shape) {
+            string name = shape->toString();
+            string fillMode = shape->getFillMode();
+            char color = shape->getColor();
+            int id = shape->getId();
+            int width = shape->getWidth();
+            int height = shape->getHeight();
+            auto it = find(shapes.begin(), shapes.end(), shape);
+            if (it != shapes.end()) {
+                shapes.erase(it);
+            }
+            stringstream ss(newParam);
+            int x,y;
+            string item;
+            vector<string> parts;
+            while (getline(ss, item, ',')) {
+                parts.push_back(item);
+            }
+            if (parts.size() != 2) {
+                cout << "Invalid input format." << endl;
+                return;
+            }
+            x = stoi(parts[0]);
+            y = stoi((parts[1]));
+            newParam ="";
+            newParam+=to_string(x);
+            newParam +=",";
+            newParam +=to_string(y);
+
+            if (name == "Line"||name == "line") {
+                std::shared_ptr<Line> line;
+                if (width==0){
+                    newParam +=",";
+                    newParam +=to_string(height);
+                    line = std::make_shared<Line>(x, y,  height, 0, fillMode,color);
+                    shapes.insert(shapes.begin()+id-1, line);
+                    idParameters[id] = newParam;
+                }else if(height==0){
+                    newParam +=",";
+                    newParam+= to_string(width);
+                    line = std::make_shared<Line>(x, y, 0, width, fillMode, color);
+                    shapes.insert(shapes.begin()+id-1, line);
+                    idParameters[id] = newParam;
+                }
+            } else if (name == "Triangle"|| name == "triangle") {
+                newParam +=",";
+                newParam +=to_string(height);
+                auto triangle = std::make_shared<Triangle>(x, y, height, fillMode,color);
+                shapes.insert(shapes.begin()+id-1, triangle);
+                idParameters[id] = newParam;
+            } else if (name == "Square"||name == "square") {
+                newParam +=",";
+                newParam +=to_string(height);
+                auto square = std::make_shared<Square>(x, y, height, fillMode,color);
+                shapes.insert(shapes.begin()+id-1, square);
+                idParameters[id] = newParam;
+            } else if (name == "Rectangle"||name == "rectangle") {
+                newParam +=",";
+                newParam +=to_string(height);
+                newParam +=",";
+                newParam +=to_string(width);
+                auto rectangle = std::make_shared<Rectangle>(x, y, height, width, fillMode,color);
+                shapes.insert(shapes.begin()+id-1, rectangle);
+                idParameters[id] = newParam;
+            } else if (name == "Circle"||name == "circle") {
+                newParam +=",";
+                newParam +=to_string(height);
+                auto circle = std::make_shared<Circle>(x, y, height, fillMode,color);
+                shapes.insert(shapes.begin()+id-1, circle);
+                idParameters[id] = newParam;
+            }
+            board.clear();
+            for(auto& shape: shapes){
+                int id= shape->getId();
+                auto par =idParameters.find(id);
+                string parameters = par->second;
+                vector<string> parts;
+                string item, fillMode;
+                char color;
+                stringstream ss(parameters);
+                while (getline(ss, item, ',')) {
+                    parts.push_back(item);
+                }
+                color =shape->getColor();
+                fillMode = shape->getFillMode();
+                int x = stoi(parts[0]);
+                int y = stoi(parts[1]);
+                int height = stoi(parts[2]);
+                int width =0;
+                if(parts.size() ==4){
+                    if(parts[3]!="Vertical"||parts[3]!="vertical" || parts[3]!="Horizontal"||parts[3]!="horizontal"){
+                        width = stoi(parts[3]);
+                        if (fillMode =="empty") { shape->draw(board, x, y, height, width); }
+                        else {shape->fill(board,x,y,height,width,color); }
+                    }else if(parts[3]=="Vertical"||parts[3]=="vertical" ){
+                        if (fillMode =="empty"){ shape->draw(board, x, y, height, width); }
+                        else{shape->fill(board, x, y, height, width, color);}
+                    }else if(parts[3]=="Horizontal"||parts[3]=="horizontal"){
+                        if (fillMode =="empty"){ shape->draw(board, x, y, width, height); }
+                        else{shape->fill(board, x, y, width,height, color);}
+                    }
+                }else{
+                    shape->draw(board, x, y, height,width);
+                }
+
+            }
+
+        }else{
+            cout<<"No selected shape";
+        }
+    }
+
+    void changeColor(Board& board, shared_ptr<Shape>shape, string newColor)  {
+        vector<shared_ptr<Shape>>& shapes = board.getShapes();
+        map<int, string >& idParameters = board.getDic();
+        char color;
+        if (shape) {
+            int width = shape->getWidth();
+            int height = shape->getHeight();
+            int x = shape->getX();
+            int y = shape->getY();
+            color = newColor[0];
+            shape->setColor(color);
+            shape->fill(board, x, y, height, width, color);
+        }else{
+            cout<<"No selected shape"<<endl;
+        }
+    };
+
     void manage(){
         Board board(BOARD_WIDTH, BOARD_HEIGHT);
         string shape, userInput, item,value, fillMode, params,symbol, fillColor;
@@ -1097,6 +1319,17 @@ public:
                     if (i != (1 + requiredParams)) params += ",";
                 }
                 edit(board,selectedShape,params);
+            }else if(command == "10"){
+                string color = parts[1];
+                changeColor(board,selectedShape, color);
+
+            }
+            else if (command =="11"){
+                params.clear();
+                params+=parts[1];
+                params+=",";
+                params+=parts[2];
+                move(board, selectedShape,params);
             }
             else if (command == "12"){
                 filePath = parts[1];

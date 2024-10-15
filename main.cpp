@@ -13,7 +13,7 @@ using namespace std;
 const int BOARD_WIDTH = 80;
 const int BOARD_HEIGHT = 25;
 class Board;
-int currentId=1;
+int currentId=0;
 
 class Shape{
 public:
@@ -65,7 +65,6 @@ public:
     void addShape(shared_ptr<Shape> shape, const string& parameters){
         shapes.push_back(shape);
         idParameters[currentId]= parameters;
-        currentId++;
     }
     void clear() {
         for (auto& row : grid) {
@@ -419,12 +418,14 @@ public:
             if (fillMode == "empty"||fillMode == "Empty"){
                 bool value = line->draw(board, x, y, 0, len);
                 if(value == 1){
+                    currentId++;
                     board.addShape(line,par);
                     cout<<"Line was successfully added!"<<endl;
                 }
             } else{
                 bool value = line->fill(board, x, y, 0, len, symbol);
                 if(value == 1){
+                    currentId++;
                     board.addShape(line,par);
                     cout<<"Line was successfully added!"<<endl;
                 }
@@ -435,12 +436,14 @@ public:
             if (fillMode == "empty"||fillMode == "Empty"){
                 bool value = line->draw(board, x, y, len, 0);
                 if(value == 1){
+                    currentId++;
                     board.addShape(line,par);
                     cout<<"Line was successfully added!"<<endl;
                 }
             } else{
                 bool value = line->fill(board, x, y,  len,0, symbol);
                 if(value == 1){
+                    currentId++;
                     board.addShape(line,par);
                     cout<<"Line was successfully added!"<<endl;
                 }
@@ -468,12 +471,14 @@ public:
         if (fillMode == "empty"||fillMode == "Empty") {
             bool value = square->draw(board, x, y, len, 0);
             if (value == 1) {
+                currentId++;
                 board.addShape(square, par);
                 cout << "Square was successfully added!" << endl;
             }
         } else{
             bool value = square->fill(board, x, y,  len,0, symbol);
             if (value == 1) {
+                currentId++;
                 board.addShape(square, par);
                 cout << "Square was successfully added!" << endl;
             }
@@ -496,6 +501,7 @@ public:
         x = stoi(parts[0]);
         y = stoi((parts[1]));
         len = stoi(parts[2]);
+        currentId++;
         auto triangle = std::make_shared<Triangle>(x, y, len, fillMode,symbol);
         if (fillMode == "empty"||fillMode == "Empty") {
             bool value = triangle->draw(board, x, y, len, 0);
@@ -529,7 +535,7 @@ public:
         y = stoi((parts[1]));
         len = stoi(parts[2]);
         width = stoi(parts[3]);
-
+        currentId++;
         auto rectangle = std::make_shared<Rectangle>(x, y, len, width, fillMode,symbol);
         if (fillMode == "empty"||fillMode == "Empty") {
             bool value = rectangle->draw(board, x, y, len, width);
@@ -563,6 +569,7 @@ public:
         x = stoi(parts[0]);
         y = stoi((parts[1]));
         len = stoi(parts[2]);
+        currentId++;
         auto circle = std::make_shared<Circle>(x, y, len, fillMode,symbol);
         if (fillMode == "empty"||fillMode == "Empty") {
             bool value = circle->draw(board, x, y, len, 0);
@@ -837,23 +844,13 @@ public:
                 std::shared_ptr<Line> line;
                 if (direction == "vertical"|| direction=="Vertical") {
                     line = std::make_shared<Line>(x, y, 0, len, fillMode, color);
-                    if (fillMode == "empty"||fillMode == "Empty"){
-                        line->draw(board, x, y, 0, len);
-                        shapes.insert(shapes.begin()+id-1, line);
-                    } else{
-                        line->fill(board, x, y, 0, len, color);
-                        shapes.insert(shapes.begin()+id-1, line);
-                    }
+                    shapes.insert(shapes.begin()+id-1, line);
+                    idParameters[id] = newParam;
                 }
                 else if (direction =="horizontal"|| direction=="Horizontal"){
                     line = std::make_shared<Line>(x, y,  len, 0, fillMode,color);
-                    if (fillMode == "empty"||fillMode == "Empty"){
-                        line->draw(board, x, y, len, 0);
-                        shapes.insert(shapes.begin()+id-1, line);
-                    } else{
-                        line->fill(board, x, y,  len,0, color);
-                        shapes.insert(shapes.begin()+id-1, line);
-                    }
+                    shapes.insert(shapes.begin()+id-1, line);
+                    idParameters[id] = newParam;
                 }
             } else if (name == "Triangle"|| name == "triangle") {
                 int x,y,len;
@@ -870,15 +867,9 @@ public:
                 x = stoi(parts[0]);
                 y = stoi((parts[1]));
                 len = stoi(parts[2]);
-                auto triangle = std::make_shared<Square>(x, y, len, fillMode,color);
-                if (fillMode == "empty"||fillMode == "Empty") {
-                    triangle->draw(board, x, y, len, 0);
-                    shapes.insert(shapes.begin()+id-1, triangle);
-
-                } else{
-                    triangle->fill(board, x, y,  len,0, color);
-                    shapes.insert(shapes.begin()+id-1, triangle);
-                }
+                auto triangle = std::make_shared<Triangle>(x, y, len, fillMode,color);
+                shapes.insert(shapes.begin()+id-1, triangle);
+                idParameters[id] = newParam;
             } else if (name == "Square"||name == "square") {
                 int x,y,len;
                 stringstream ss(newParam);
@@ -895,14 +886,8 @@ public:
                 y = stoi((parts[1]));
                 len = stoi(parts[2]);
                 auto square = std::make_shared<Square>(x, y, len, fillMode,color);
-                if (fillMode == "empty"||fillMode == "Empty") {
-                    square->draw(board, x, y, len, 0);
-                    shapes.insert(shapes.begin()+id-1, square);
-                } else{
-                    square->fill(board, x, y,  len,0, color);
-                    shapes.insert(shapes.begin()+id-1, square);
-
-                }
+                shapes.insert(shapes.begin()+id-1, square);
+                idParameters[id] = newParam;
             } else if (name == "Rectangle"||name == "rectangle") {
                 stringstream ss(newParam);
                 int x,y,len, width;
@@ -921,14 +906,8 @@ public:
                 width = stoi(parts[3]);
 
                 auto rectangle = std::make_shared<Rectangle>(x, y, len, width, fillMode,color);
-                if (fillMode == "empty"||fillMode == "Empty") {
-                    rectangle->draw(board, x, y, len, width);
-                    shapes.insert(shapes.begin()+id-1, rectangle);
-
-                }else{
-                    rectangle->fill(board, x, y,  len,width, color);
-                    shapes.insert(shapes.begin()+id-1, rectangle);
-                }
+                shapes.insert(shapes.begin()+id-1, rectangle);
+                idParameters[id] = newParam;
             } else if (name == "Circle"||name == "circle") {
                 stringstream ss(newParam);
                 int x,y,len;
@@ -945,14 +924,10 @@ public:
                 y = stoi((parts[1]));
                 len = stoi(parts[2]);
                 auto circle = std::make_shared<Circle>(x, y, len, fillMode,color);
-                if (fillMode == "empty"||fillMode == "Empty") {
-                    circle->draw(board, x, y, len, 0);
-                    shapes.insert(shapes.begin()+id-1, circle);
-                } else{
-                    circle->fill(board, x, y,  len,0, color);
-                    shapes.insert(shapes.begin()+id-1, circle);
-                }
+                shapes.insert(shapes.begin()+id-1, circle);
+                idParameters[id] = newParam;
             }
+            board.clear();
             for(auto& shape: shapes){
                 int id= shape->getId();
                 auto par =idParameters.find(id);
@@ -1102,6 +1077,7 @@ public:
             else if (command =="9"){
                 string params = "";
                 int requiredParams = 0;
+                shape = selectedShape->toString();
                 if (shape == "Line"||shape == "line") {
                     requiredParams = 4;
                 } else if (shape == "Triangle"|| shape == "triangle") {
@@ -1116,9 +1092,9 @@ public:
                     cout << "Unknown shape. Please try again." << endl;
                     continue;
                 }
-                for (int i=2; i<2 + requiredParams; ++i) {
+                for (int i=1; i<1 + requiredParams; ++i) {
                     params += parts[i];
-                    if (i != (2 + requiredParams)) params += ",";
+                    if (i != (1 + requiredParams)) params += ",";
                 }
                 edit(board,selectedShape,params);
             }
